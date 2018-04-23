@@ -36,7 +36,7 @@ class Transaction_DK(object):
     def csv(self):
         o = '{}'.format(self.Outflow) if self.Outflow > 0.0 else ''
         i = '{}'.format(self.Inflow) if self.Inflow > 0.0 else ''
-        s = '{!s},{!s},{!s},{!s},{},{}'.format(self.Date, self.Payee, self.Category, self.Memo, o, i)
+        s = '{!s},{!s},{!s},{!s},{},{}'.format(self.Date, self.Payee.replace(',',''), self.Category, self.Memo, o, i)
         return s
     
 
@@ -65,10 +65,10 @@ def main(inp, outp, as_qif=False):
                 for line in fin:
                     transaction = reader(line)
                     if transaction is not None:
-                        print(transaction.csv())
+                        print(transaction.csv(), file=fout)
                 
 
     
-main('test/danskebank/test1.csv', 'bla')
+main('/home/stefan/Downloads/Budgetkonto-4788268459-20180423.csv', '/home/stefan/Downloads/ynab.csv')
 
     
