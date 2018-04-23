@@ -51,7 +51,9 @@ def reader(line, stats=('Udført',)):
 
 '''
 def main(inp, outp, as_qif=False):
-    # check output file name
+   
+    if as_qif:
+        raise NotImplementedError('QUICKEN output format not yet implemented.')
     
     with codecs.open(inp,  encoding='latin1') as fin:
         l1 = fin.readline().rstrip()
@@ -66,9 +68,29 @@ def main(inp, outp, as_qif=False):
                     transaction = reader(line)
                     if transaction is not None:
                         print(transaction.csv(), file=fout)
-                
 
+def make_output_name(input, qif=False, suffix='_ynab'):
+    output, ext = os.path.splitext(input)
+    if ext == '.csv' and qif == False or ext == '.qif' and qif == True:
+        return output + suffix + ext
+    ext = '.qif' if qif else '.csv'
+    return output + ext
+                
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Converts Danske Bank CSV files to YNAB formats.')
+    parser.add_argument('input', help='Input filename, the CSV file from Danske Bank.')
+    parser.add_argument('output', nargs='?', help='Output filename')
+    parser.add_argument('-q','--qif', help='Output in QUICKEN format (not yet supported).', action='store_true')
+    parser.add_argument('-v', nargs='+', help='Verbose, adds logging output for your convenience.')
+    parser.add_argument('--suffix', default='_ynab', help='Suffix to filename when input and output files are both CSV.')
+    args = parser.parse_args()
+    print(args)
     
-main('/home/stefan/Downloads/Budgetkonto-4788268459-20180423.csv', '/home/stefan/Downloads/ynab.csv')
+    if args.output is None:
+        args.output = make_output_name(args.input, qif=args.qif, suffix=args.suffix)
+        
+    #main(args.input, args.output, as_qif=args.qif)
+    
+
 
     
