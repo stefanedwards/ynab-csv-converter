@@ -6,6 +6,7 @@ from collections import OrderedDict
 import codecs
 from functools import reduce
 from operator import concat
+import re
 
 # Author: Stefan McKinnon Edwards
 # Date: April 2018
@@ -22,7 +23,8 @@ from operator import concat
 class Transaction_DK(object):
     def __init__(self, Date, Payee, Category='', Memo='', amount_str=0.0):
         self.Date = Date.replace('.','/')
-        self.Payee = Payee
+        self.Payee = re.sub('[ ]+[)]+','', Payee)
+        self.Payee_raw = Payee
         self.Category = Category
         self.Memo = Memo
         num = float(amount_str.replace('.','', 1).replace(',','.', 1))
@@ -50,7 +52,7 @@ def reader(line, stats=('Udført',)):
 '''
 
 '''
-def main(inp, outp, as_qif=False):
+def main(inp, outp, as_qif=False, verbose=0):
    
     if as_qif:
         raise NotImplementedError('QUICKEN output format not yet implemented.')
@@ -62,12 +64,17 @@ def main(inp, outp, as_qif=False):
             print(fields)
             raise ValueError('Downloadet CSV fil har ikke den rigtige første linje')   
         with codecs.open(outp, 'w', encoding='latin1') as fout:
+            i = 0
             if not as_qif:
                 fout.write('Date,Payee,Category,Memo,Outflow,Inflow\n')
                 for line in fin:
                     transaction = reader(line)
                     if transaction is not None:
                         print(transaction.csv(), file=fout)
+                        i += 1
+    if verbose > 0:
+        print('Converted',i,'lines.')
+        print('Output written to',outp)
 
 def make_output_name(input, qif=False, suffix='_ynab'):
     output, ext = os.path.splitext(input)
@@ -81,15 +88,14 @@ if __name__ == '__main__':
     parser.add_argument('input', help='Input filename, the CSV file from Danske Bank.')
     parser.add_argument('output', nargs='?', help='Output filename')
     parser.add_argument('-q','--qif', help='Output in QUICKEN format (not yet supported).', action='store_true')
-    parser.add_argument('-v', nargs='+', help='Verbose, adds logging output for your convenience.')
+    parser.add_argument('--verbose', '-v', default=1, help='Verbose, adds logging output for your convenience.', action='count')
     parser.add_argument('--suffix', default='_ynab', help='Suffix to filename when input and output files are both CSV.')
     args = parser.parse_args()
-    print(args)
     
     if args.output is None:
         args.output = make_output_name(args.input, qif=args.qif, suffix=args.suffix)
         
-    #main(args.input, args.output, as_qif=args.qif)
+    main(args.input, args.output, as_qif=args.qif, verbose=args.verbose)
     
 
 
