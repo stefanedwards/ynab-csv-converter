@@ -58,6 +58,9 @@ def reader(line, filter=True, stats=('Udført',), cleared=('Udført',), notcleared
     if text.startswith('MobilePay: '):
         memo = 'MobilePay'
         text = text[10:]
+    startPos = text.find("))))") 
+    if startPos != -1 :
+        text = text[:startPos]
     t = Transaction_DK(line[0], text, amount_str=line[2], Memo=memo, Cleared=True)
     return t
 
@@ -75,7 +78,7 @@ def main(inp, outp, as_qif=False, verbose=0, qifopt=None):
         if fields != ['Dato', 'Tekst', 'Bel\xf8b', 'Saldo', 'Status', 'Afstemt']:
             print(fields)
             raise ValueError('Downloadet CSV fil har ikke den rigtige første linje')   
-        with codecs.open(outp, 'w', encoding='latin1') as fout:
+        with codecs.open(outp, 'w', encoding='utf-8') as fout:
             i = 0
             j = 0
             if not as_qif:
