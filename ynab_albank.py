@@ -8,9 +8,10 @@ from functools import reduce
 from operator import concat
 import re
 
-# Author: Stefan McKinnon Edwards
+# Original Author: Stefan McKinnon Edwards
+# Adjustments for ALBank: Klaus Kneupner
 # Date: April 2018
-# Converts a CSV file from Danske Bank for import to YNAB4.
+# Converts a CSV file from Arbejders Landbank for import to YNAB (online).
 #
 # Reads a CSV file from Arbejders Landsbank and outputs
 # either a QIF (or quiz? or, I forget) file
@@ -55,7 +56,7 @@ def reader(line, verbose=0, lineno=0):
     if text.startswith('DK-NOTA'):
         memo = text[:13]
         text = text[13:]
-    if text.startswith('MobilePay: '):
+    if text.startswith('MobilePay: ') or text.startswith('MOBILEPAY: ') :
         memo = 'MobilePay'
         text = text[10:]
     t = Transaction_DK(line[0], text, amount_str=line[2], Memo=memo, Cleared=True)
@@ -67,7 +68,7 @@ def reader(line, verbose=0, lineno=0):
 def main(inp, outp, as_qif=False, verbose=0, qifopt=None):
        
     with codecs.open(inp,  encoding='latin1') as fin:
-        with codecs.open(outp, 'w', encoding='latin1') as fout:
+        with codecs.open(outp, 'w', encoding='utf-8') as fout:
             i = 0
             j = 0
             if qifopt is None:
