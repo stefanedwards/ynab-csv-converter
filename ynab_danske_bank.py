@@ -52,10 +52,11 @@ def reader(line, filter=True, stats=('Udført',), cleared=('Udført',), notcleared
     line = [s.strip('"') for s in line.rstrip().split(';')]
     if filter and not line[4] in stats:
         return None
-    if not filter:
+    else:
         is_cleared = line[4] in cleared
         if verbose > 0 and not is_cleared and line[4] not in notcleared:
             print('Did not recognize cleared state ("{}") on line {}.'.format(line[4], lineno))
+            
         
     t = Transaction_DK(line[0], line[1], amount_str=line[2], Cleared=is_cleared)
     return t
@@ -117,8 +118,7 @@ if __name__ == '__main__':
     if args.output is None:
         args.output = make_output_name(args.input, qif=args.qif, suffix=args.suffix)
     
-    if args.qif:
-        qifopt = {'header':args.qt}
+    qifopt = {'header':args.qt}
         
     main(args.input, args.output, as_qif=args.qif, verbose=args.verbose, qifopt=qifopt)
     
