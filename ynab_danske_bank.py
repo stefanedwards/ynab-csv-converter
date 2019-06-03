@@ -7,6 +7,7 @@ import codecs
 from functools import reduce
 from operator import concat
 import re
+from qiffer import test
 
 # Author: Stefan McKinnon Edwards
 # Date: April 2018
