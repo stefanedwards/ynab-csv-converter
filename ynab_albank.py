@@ -8,17 +8,18 @@ from functools import reduce
 from operator import concat
 import re
 
-# Author: Stefan McKinnon Edwards
+# Original Author: Stefan McKinnon Edwards
+# Adjustments for ALBank: Klaus Kneupner
 # Date: April 2018
-# Converts a CSV file from Danske Bank for import to YNAB4.
+# Converts a CSV file from Arbejders Landbank for import to YNAB (online).
 #
-# Reads a CSV file from Danske Bank and outputs
+# Reads a CSV file from Arbejders Landsbank and outputs
 # either a QIF (or quiz? or, I forget) file
 # or a CSV file for YNAB.
 # Output CSV header:
 # Date,Payee,Category,Memo,Outflow,Inflow
 # Input CSV header:
-# "Dato";"Tekst";"Beløb";"Saldo";"Status";"Afstemt"
+# dd-mm-yyyy;"Text";Bel¿b;Saldo
 
 class Transaction_DK(object):
     def __init__(self, Date, Payee, Category='', Memo='', amount_str=0.0, Cleared=True):
@@ -44,28 +45,21 @@ class Transaction_DK(object):
     
     def qif(self):
         c = '*' if self.Cleared else ' '
-        s = 'D{}\nT{:+.2f}\nP{}\nC{}\n^\n'.format(self.Date, self.flow, self.Payee, c)
+        s = 'D{}\nT{:+.2f}\nP{}\nM{}\nC{}\n^\n'.format(self.Date, self.flow, self.Payee, self.Memo, c)
         return s
     
 
-def reader(line, filter=True, stats=('Udført',), cleared=('Udført',), notcleared=('Venter',), verbose=0, lineno=0):
+def reader(line, verbose=0, lineno=0):
     line = [s.strip('"') for s in line.rstrip().split(';')]
-    print(line)
     text = line[1]
     memo = ''
     if text.startswith('DK-NOTA'):
         memo = text[:13]
         text = text[13:]
-    if text.startswith('MobilePay: '):
+    if text.startswith('MobilePay: ') or text.startswith('MOBILEPAY: ') :
         memo = 'MobilePay'
         text = text[10:]
-    startPos = text.find("))))") 
-    if startPos != -1 :
-        text = text[:startPos]
     t = Transaction_DK(line[0], text, amount_str=line[2], Memo=memo, Cleared=True)
-    return t
-
-    t = Transaction_DK(line[0], line[1], amount_str=line[2], Cleared=is_cleared)
     return t
 
 '''
@@ -74,32 +68,18 @@ def reader(line, filter=True, stats=('Udført',), cleared=('Udført',), notcleared
 def main(inp, outp, as_qif=False, verbose=0, qifopt=None):
        
     with codecs.open(inp,  encoding='latin1') as fin:
-        l1 = fin.readline().rstrip()
-        fields = [s.strip('"') for s in l1.split(';')]
-        if fields != ['Dato', 'Tekst', 'Bel\xf8b', 'Saldo', 'Status', 'Afstemt']:
-            print(fields)
-            raise ValueError('Downloadet CSV fil har ikke den rigtige første linje')   
         with codecs.open(outp, 'w', encoding='utf-8') as fout:
             i = 0
             j = 0
-            if not as_qif:
-                fout.write('Date,Payee,Category,Memo,Outflow,Inflow\n')
-                for line in fin:
-                    j += 1
-                    transaction = reader(line, verbose=verbose, lineno=j)
-                    if transaction is not None:
-                        print(transaction.csv(), file=fout)
-                        i += 1
-            else:
-                if qifopt is None:
-                    qifopt = {'header':'Bank'}
-                    
-                fout.write('!Type:{}\n'.format(qifopt['header']))
-                for line in fin:
-                    transaction = reader(line, filter=False, verbose=verbose, lineno=j)
-                    if transaction is not None:
-                        print(transaction.qif(), file=fout)
-                        i += 1
+            if qifopt is None:
+                qifopt = {'header':'Bank'}
+                
+            fout.write('!Type:{}\n'.format(qifopt['header']))
+            for line in fin:
+                transaction = reader(line, verbose=verbose, lineno=j)
+                if transaction is not None:
+                    print(transaction.qif(), file=fout)
+                    i += 1
                 
     if verbose > 0:
         print('Converted',i,'lines.')
@@ -127,8 +107,6 @@ if __name__ == '__main__':
     
     if args.qif:
         qifopt = {'header':args.qt}
-    else:
-        qifopt = None
         
     main(args.input, args.output, as_qif=args.qif, verbose=args.verbose, qifopt=qifopt)
     

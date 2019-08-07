@@ -2,5 +2,5 @@
 
 How to use:
 
-    python ynab_danske_bank.py [-qif] inputfile [outputfile]
+    python3 ynab_danske_bank.py [-qif] [-v] inputfile [outputfile]
 
